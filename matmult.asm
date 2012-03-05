@@ -63,41 +63,80 @@ main:
           call matrix_print
           add  rsp, 8
 
-          mov  rax, matrixB	; matrixB.print ()
-          push rax
-          call matrix_print
-          add  rsp, 8
+          ;mov  rax, matrixB	; matrixB.print ()
+          ;push rax
+          ;call matrix_print
+          ;add  rsp, 8
 
-          mov  rax, matrixB	; matrixC.mult (matrixA, matrixB)
-          push rax
-          mov  rax, matrixA
-          push rax
-          mov  rax, matrixC
-          push rax
-          call matrix_mult
-          add  rsp, 24		; pop parameters & object reference
+          ;mov  rax, matrixB	; matrixC.mult (matrixA, matrixB)
+          ;push rax
+          ;mov  rax, matrixA
+          ;push rax
+          ;mov  rax, matrixC
+          ;push rax
+          ;call matrix_mult
+          ;add  rsp, 24		; pop parameters & object reference
 
-          mov  rax, matrixC	; matrixC.print ()
-          push rax
-          call matrix_print
-          add  rsp, 8
+          ;mov  rax, matrixC	; matrixC.print ()
+          ;push rax
+          ;call matrix_print
+          ;add  rsp, 8
 
           call os_return		; return to operating system
 
 ; ---------------------------------------------------------------------
 
-matrix_print:			; void matrix_print ()
-         push rbp                ; setup base pointer
-         mov  rbp, rsp
+matrix_print:			                ; void matrix_print ()
+        push    rbp                     ; setup base pointer
+        mov     rbp, rsp
+        
+        push    rax
+        push    rbx
+        push    rcx
+        push    rdx
+        push    r15                     ; push some registers
+        
+        mov     rax, [rbp + 16]
+        mov     rbx, [rax]              ; rbx = ROWS
+        mov     rcx, [rax + 32]         ; rcx = COLS
 
-	 ;
-	 ; *********************************************
-	 ;		YOUR CODE GOES HERE
-	 ; *********************************************
-	 ;
-
-	 pop  rbp                ; restore base pointer & return
-         ret
+forP:
+        call    output_newline
+        mov     rdx, 0                  ; rdx = 0 (iterator)
+        
+        
+nextP:
+        cmp     rdx, rbx                ; if rdx >= rbx (ROWS)
+        jge     endForP                 ; end outer for loop
+        
+        forInP:
+                mov     r15, 0          ; r15 = 0 (iterator)
+                
+        nextInP:
+                cmp     r15, rcx        ; if r15 >= rcx
+                jge     endInP          ; end inner for loop
+                
+                push    r15
+                call    output_int
+                add     rsp, 8
+                
+                inc     r15             ; r15++
+                jmp     nextInP         ; loop
+                
+        endInP:
+                call    output_newline  
+                inc     rdx             ; rdx++
+                jmp     nextP           ; loop
+          
+endForP:        
+        pop     r15
+        pop     rdx
+        pop     rcx
+        pop     rbx
+        pop     rax                     ; pop some registers
+        
+        pop     rbp                     ; restore base pointer & return
+        ret
 
 ;  --------------------------------------------------------------------------
 
