@@ -58,7 +58,7 @@ segment .text
 _start:
 
 main:
-          mov  rax, matrixB	; matrixA.print ()
+          mov  rax, matrixA	; matrixA.print ()
           push rax
           call matrix_print
           add  rsp, 8
@@ -129,7 +129,7 @@ nextP:
                 
                 add     r14, r13                    ; r12 += r13
                     
-                push    qword [rax + 16 + r14]      ; r14 = rax + 16 + r12
+                push    qword[rax + 16 + r14]       ; r14 = rax + 16 + r12
                 call    output_int
                 add     rsp, 8
                 
@@ -155,6 +155,9 @@ endForP:
 
 ;  --------------------------------------------------------------------------
 
+
+
+
 matrix_mult:    ; void matix_mult (matrix A, matrix B)
         push    rbp                                 ; setup base pointer
         mov     rbp, rsp
@@ -167,12 +170,17 @@ matrix_mult:    ; void matix_mult (matrix A, matrix B)
         push    r14                                 ; for inner iterator
         push    r13                                 ; for this.ROWS
         push    r12                                 ; for this.COLS
-        push    r11                                 ; for A.COLS
+        push    r11                                 ; temp storage
         push    r10                                 ; for sum
+        push    r9                                  ; temp storage
+        push    r8                                  ; temp storage
         
-        mov     rax, [rbp + 16]                     ; rax = this
-        mov     r13, [rax]                          ; r13 = this.ROWS
-        mov     r12, [rax + 8]                      ; r12 = this.COLS
+        mov     rax, [rbp + 24]                     ; rax = Matrix A
+        ;mov     r11, [rax + 8]                      ; r11 = A.COLS
+        mov     rbx, [rbp + 32]                     ; rbx = Matrix B
+        mov     rcx, [rbp + 16]                     ; rcx = this
+        mov     r13, [rcx]                          ; r13 = this.ROWS
+        mov     r12, [rcx + 8]                      ; r12 = this.COLS
 
 forM:
         mov     rdx, 0                              ; rdx = 0 (iterator)
@@ -193,15 +201,42 @@ nextM:
                         mov     r14, 0              ; r14 = 0 (iterator)
                         
                 nextInM:
-                        cmp     r14, r11            ; if r14 >= r11
+                        cmp     r14, [rax + 8]      ; if r14 >= A.COLS
                         jge     endInM              ; end inner for loop
                         
-                        ;sum = sum + A.elem[row,k] * B.elem[k, col]
+; ARRAY ACCESS: a[i,j] = [start + 16 + (i * a.COLS * 8) + (j * 8)]
+        
+                        mov     r8, r14
+                        imul    r8, 8               ; r8 = 8 * k
+                        
+                        mov     r9, rdx
+                        imul    r9, [rax + 8]
+                        imul    r9, 8               ; r9 = row * A.COL * 8
+                        add     r9, r8              ; r9 += 8 * k
+                        
+                        mov     r11, qword[rax + 16 + r9] ; sum += A.elem[row,k]
+                        
+                        mov     r8, r15
+                        imul    r8, 8               ; r8 = 8 * col
+                        
+                        mov     r9, r14
+                        imul    r9, [rbx + 8]
+                        imul    r9, 8
+                        add     r9, r8
+                        
+                        imul    r11, qword[rbx + 16 + r9]
+                        
+                        add     r10, r11
                         
                         inc     r14
                         jmp     nextInM
                         
                 endInM:
+                        call    output_tab
+                        push    r10
+                        call    output_int
+                        add     rsp, 8
+                        
                         ; this.elem[row, col] = sum
                         
                 inc     r15
@@ -211,7 +246,9 @@ nextM:
                 inc     rdx
                 jmp     nextM
                 
-endForM:        
+endForM:   
+        pop     r8
+        pop     r9
         pop     r10
         pop     r11
         pop     r12
