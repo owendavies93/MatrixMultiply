@@ -63,96 +63,168 @@ main:
           call matrix_print
           add  rsp, 8
 
-          ;mov  rax, matrixB	; matrixB.print ()
-          ;push rax
-          ;call matrix_print
-          ;add  rsp, 8
+          mov  rax, matrixB	; matrixB.print ()
+          push rax
+          call matrix_print
+          add  rsp, 8
 
-          ;mov  rax, matrixB	; matrixC.mult (matrixA, matrixB)
-          ;push rax
-          ;mov  rax, matrixA
-          ;push rax
-          ;mov  rax, matrixC
-          ;push rax
-          ;call matrix_mult
-          ;add  rsp, 24		; pop parameters & object reference
+          mov  rax, matrixB	; matrixC.mult (matrixA, matrixB)
+          push rax
+          mov  rax, matrixA
+          push rax
+          mov  rax, matrixC
+          push rax
+          call matrix_mult
+          add  rsp, 24		; pop parameters & object reference
 
-          ;mov  rax, matrixC	; matrixC.print ()
-          ;push rax
-          ;call matrix_print
-          ;add  rsp, 8
+          mov  rax, matrixC	; matrixC.print ()
+          push rax
+          call matrix_print
+          add  rsp, 8
 
           call os_return		; return to operating system
 
 ; ---------------------------------------------------------------------
 
-matrix_print:			                ; void matrix_print ()
-        push    rbp                     ; setup base pointer
+matrix_print:   ; void matrix_print ()
+        push    rbp                                 ; setup base pointer
         mov     rbp, rsp
         
-        push    rax
-        push    rbx
-        push    rcx
-        push    rdx
-        push    r15                     ; push some registers
+        push    rax                                 ; address of Matrix
+        push    rbx                                 ; for ROWS
+        push    rcx                                 ; for COLS
+        push    rdx                                 ; outer iterator
+        push    r15                                 ; inner iterator
+        push    r14                                 ; temp storage  
+        push    r13                                 ; temp storage
         
-        mov     rax, [rbp + 16]
-        mov     rbx, [rax]              ; rbx = ROWS
-        mov     rcx, [rax + 32]         ; rcx = COLS
+        mov     rax, [rbp + 16]                     ; store address in rax
+        mov     rbx, [rax]                          ; rbx = ROWS
+        mov     rcx, [rax + 8]                      ; rcx = COLS
 
 forP:
         call    output_newline
-        mov     rdx, 0                  ; rdx = 0 (iterator)
+        mov     rdx, 0                              ; rdx = 0 (iterator)
         
         
 nextP:
-        cmp     rdx, rbx                ; if rdx >= rbx (ROWS)
-        jge     endForP                 ; end outer for loop
+        cmp     rdx, rbx                            ; if rdx >= rbx (ROWS)
+        jge     endForP                             ; end outer for loop
         
         forInP:
-                mov     r15, 0          ; r15 = 0 (iterator)
+                mov     r15, 0                      ; r15 = 0 (iterator)
                 
         nextInP:
-                cmp     r15, rcx        ; if r15 >= rcx
-                jge     endInP          ; end inner for loop
+                cmp     r15, rcx                    ; if r15 >= rcx
+                jge     endInP                      ; end inner for loop
                 
-                push    r15
+                call    output_tab
+                
+                mov     r13, r15
+                imul    r13, 8                      ; r13 = r15 * 8
+                
+                mov     r14, rdx
+                imul    r14, rcx
+                imul    r14, 8                      ; r12 = rdx * rcx * 8
+                
+                add     r14, r13                    ; r12 += r13
+                    
+                push    qword [rax + 16 + r14]      ; r14 = rax + 16 + r12
                 call    output_int
                 add     rsp, 8
                 
-                inc     r15             ; r15++
-                jmp     nextInP         ; loop
+                inc     r15                         ; r15++
+                jmp     nextInP                     ; loop
                 
         endInP:
                 call    output_newline  
-                inc     rdx             ; rdx++
-                jmp     nextP           ; loop
+                inc     rdx                         ; rdx++
+                jmp     nextP                       ; loop
           
-endForP:        
+endForP:
+        pop     r13
+        pop     r14
         pop     r15
         pop     rdx
         pop     rcx
         pop     rbx
-        pop     rax                     ; pop some registers
+        pop     rax                                 ; pop all the registers
         
-        pop     rbp                     ; restore base pointer & return
+        pop     rbp                                 ; restore bp & return
         ret
 
 ;  --------------------------------------------------------------------------
 
-matrix_mult:                    ; void matix_mult (matrix A, matrix B)
+matrix_mult:    ; void matix_mult (matrix A, matrix B)
+        push    rbp                                 ; setup base pointer
+        mov     rbp, rsp
+        
+        push    rax                                 ; address of Matrix A
+        push    rbx                                 ; address of Matrix B
+        push    rcx                                 ; address of Matrix C
+        push    rdx                                 ; for outer iterator
+        push    r15                                 ; for middle iterator
+        push    r14                                 ; for inner iterator
+        push    r13                                 ; for this.ROWS
+        push    r12                                 ; for this.COLS
+        push    r11                                 ; for A.COLS
+        push    r10                                 ; for sum
+        
+        mov     rax, [rbp + 16]                     ; rax = this
+        mov     r13, [rax]                          ; r13 = this.ROWS
+        mov     r12, [rax + 8]                      ; r12 = this.COLS
 
-         push rbp                ; setup base pointer
-         mov  rbp, rsp
+forM:
+        mov     rdx, 0                              ; rdx = 0 (iterator)
+        
+nextM:   
+        cmp     rdx, r13                            ; if rdx >= r13
+        jge     endForM                             ; end outer for loop
+        
+        forMidM:
+                mov     r15, 0                      ; r15 = 0 (iterator)
+                
+        nextMidM:
+                cmp     r15, r12                    ; if r15 >= r12
+                jge     endMidM                     ; end middle for loop
+                mov     r10, 0                      ; sum = 0
+                
+                forInM:
+                        mov     r14, 0              ; r14 = 0 (iterator)
+                        
+                nextInM:
+                        cmp     r14, r11            ; if r14 >= r11
+                        jge     endInM              ; end inner for loop
+                        
+                        ;sum = sum + A.elem[row,k] * B.elem[k, col]
+                        
+                        inc     r14
+                        jmp     nextInM
+                        
+                endInM:
+                        ; this.elem[row, col] = sum
+                        
+                inc     r15
+                jmp     nextMidM
+                
+        endMidM:
+                inc     rdx
+                jmp     nextM
+                
+endForM:        
+        pop     r10
+        pop     r11
+        pop     r12
+        pop     r13
+        pop     r14
+        pop     r15
+        pop     rdx
+        pop     rcx
+        pop     rbx
+        pop     rax                                 ; pop all the registers
 
-	 ;
-	 ; *********************************************
-	 ;		YOUR CODE GOES HERE
-	 ; *********************************************
-	 ;
-
-	 pop  rbp                ; restore base pointer & return
-         ret
+        pop     rbp                                 ; restore bp & return
+        ret
 
 
 ; ---------------------------------------------------------------------
