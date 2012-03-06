@@ -58,7 +58,7 @@ segment .text
 _start:
 
 main:
-          mov  rax, matrixA	; matrixA.print ()
+          mov  rax, matrixB	; matrixA.print ()
           push rax
           call matrix_print
           add  rsp, 8
@@ -86,61 +86,74 @@ main:
 
 ; ---------------------------------------------------------------------
 
-matrix_print:			                ; void matrix_print ()
-        push    rbp                     ; setup base pointer
+matrix_print:			                            ; void matrix_print ()
+        push    rbp                                 ; setup base pointer
         mov     rbp, rsp
         
         push    rax
         push    rbx
         push    rcx
         push    rdx
-        push    r15                     ; push some registers
+        push    r15                                     
         push    r14 
+        push    r13
+        push    r12                                 ; push some registers
         
-        mov     rax, [rbp + 16]
-        mov     rbx, [rax]              ; rbx = ROWS
-        mov     rcx, [rax + 32]         ; rcx = COLS
+        mov     rax, [rbp + 16]                     ; store address in rax
+        mov     rbx, [rax]                          ; rbx = ROWS
+        mov     rcx, [rax + 8]                      ; rcx = COLS
 
 forP:
         call    output_newline
-        mov     rdx, 0                  ; rdx = 0 (iterator)
+        mov     rdx, 0                              ; rdx = 0 (iterator)
         
         
 nextP:
-        cmp     rdx, rbx                ; if rdx >= rbx (ROWS)
-        jge     endForP                 ; end outer for loop
+        cmp     rdx, rbx                            ; if rdx >= rbx (ROWS)
+        jge     endForP                             ; end outer for loop
         
         forInP:
-                mov     r15, 0          ; r15 = 0 (iterator)
+                mov     r15, 0                      ; r15 = 0 (iterator)
                 
         nextInP:
-                cmp     r15, rcx        ; if r15 >= rcx
-                jge     endInP          ; end inner for loop
+                cmp     r15, rcx                    ; if r15 >= rcx
+                jge     endInP                      ; end inner for loop
                 
                 call    output_tab
                 
-                mov     r14, [rbp+rdx+r15]
-                push    r14
+                mov     r13, r15
+                imul    r13, 8                      ; r13 = r15 * 8
+                
+                mov     r12, rdx
+                imul    r12, rcx
+                imul    r12, 8                      ; r12 = rdx * rcx * 8
+                
+                add     r12, r13                    ; r12 += r13
+                    
+                mov     r14, [rax + 16 + r12]       ; r14 = rax + 16 + r12
+                push    r14                             
                 call    output_int
                 add     rsp, 8
                 
-                inc     r15             ; r15++
-                jmp     nextInP         ; loop
+                inc     r15                         ; r15++
+                jmp     nextInP                     ; loop
                 
         endInP:
                 call    output_newline  
-                inc     rdx             ; rdx++
-                jmp     nextP           ; loop
+                inc     rdx                         ; rdx++
+                jmp     nextP                       ; loop
           
 endForP:
+        pop     r12
+        pop     r13
         pop     r14
         pop     r15
         pop     rdx
         pop     rcx
         pop     rbx
-        pop     rax                     ; pop some registers
+        pop     rax                                 ; pop some registers
         
-        pop     rbp                     ; restore base pointer & return
+        pop     rbp                                 ; restore bp & return
         ret
 
 ;  --------------------------------------------------------------------------
