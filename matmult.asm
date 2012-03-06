@@ -176,7 +176,6 @@ matrix_mult:    ; void matix_mult (matrix A, matrix B)
         push    r8                                  ; temp storage
         
         mov     rax, [rbp + 24]                     ; rax = Matrix A
-        ;mov     r11, [rax + 8]                      ; r11 = A.COLS
         mov     rbx, [rbp + 32]                     ; rbx = Matrix B
         mov     rcx, [rbp + 16]                     ; rcx = this
         mov     r13, [rcx]                          ; r13 = this.ROWS
@@ -211,40 +210,43 @@ nextM:
                         
                         mov     r9, rdx
                         imul    r9, [rax + 8]
-                        imul    r9, 8               ; r9 = row * A.COL * 8
+                        imul    r9, 8               ; r9 = row * A.COLS * 8
                         add     r9, r8              ; r9 += 8 * k
                         
-                        mov     r11, qword[rax + 16 + r9] ; sum += A.elem[row,k]
+                        mov     r11, qword[rax + 16 + r9] ; r11 = A.elem[row,k]
                         
                         mov     r8, r15
                         imul    r8, 8               ; r8 = 8 * col
                         
                         mov     r9, r14
                         imul    r9, [rbx + 8]
+                        imul    r9, 8               ; r9 = k * B.COLS * 8
+                        add     r9, r8
+                        
+                        imul    r11, qword[rbx + 16 + r9] ; r11 *= B.elem[k,col]
+                        
+                        add     r10, r11            ; sum += r11
+                        
+                        inc     r14                 ; k++
+                        jmp     nextInM             ; loop
+                        
+                endInM:
+                        mov     r8, rdx
+                        imul    r8, r12   
+                        imul    r8, 8
+                        
+                        mov     r9, r15
                         imul    r9, 8
                         add     r9, r8
                         
-                        imul    r11, qword[rbx + 16 + r9]
+                        mov     [rcx + 16 + r9], r10
                         
-                        add     r10, r11
-                        
-                        inc     r14
-                        jmp     nextInM
-                        
-                endInM:
-                        call    output_tab
-                        push    r10
-                        call    output_int
-                        add     rsp, 8
-                        
-                        ; this.elem[row, col] = sum
-                        
-                inc     r15
-                jmp     nextMidM
+                inc     r15                         ; col++
+                jmp     nextMidM                    ; loop
                 
         endMidM:
-                inc     rdx
-                jmp     nextM
+                inc     rdx                         ; row++
+                jmp     nextM                       ; loop
                 
 endForM:   
         pop     r8
