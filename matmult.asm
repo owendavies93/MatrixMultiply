@@ -95,6 +95,7 @@ matrix_print:			                ; void matrix_print ()
         push    rcx
         push    rdx
         push    r15                     ; push some registers
+        push    r14 
         
         mov     rax, [rbp + 16]
         mov     rbx, [rax]              ; rbx = ROWS
@@ -116,7 +117,10 @@ nextP:
                 cmp     r15, rcx        ; if r15 >= rcx
                 jge     endInP          ; end inner for loop
                 
-                push    r15
+                call    output_tab
+                
+                mov     r14, [rbp+rdx+r15]
+                push    r14
                 call    output_int
                 add     rsp, 8
                 
@@ -128,7 +132,8 @@ nextP:
                 inc     rdx             ; rdx++
                 jmp     nextP           ; loop
           
-endForP:        
+endForP:
+        pop     r14
         pop     r15
         pop     rdx
         pop     rcx
