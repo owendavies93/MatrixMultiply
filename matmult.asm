@@ -58,7 +58,7 @@ segment .text
 _start:
 
 main:
-          mov  rax, matrixA	; matrixA.print ()
+          mov  rax, matrixB	; matrixA.print ()
           push rax
           call matrix_print
           add  rsp, 8
