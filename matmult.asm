@@ -101,8 +101,6 @@ matrix_print:   ; void matrix_print ()
         mov     rax, [rbp + 16]                 ; store address in rax
         mov     rbx, [rax]                      ; rbx = ROWS
         mov     rcx, [rax + 8]                  ; rcx = COLS
-
-forP:
         call    output_newline
         mov     rdx, 0                          ; rdx = 0 (iterator)
         
@@ -110,9 +108,7 @@ forP:
 nextP:
         cmp     rdx, rbx                        ; if rdx >= rbx (ROWS)
         jge     endForP                         ; end outer for loop
-        
-        forInP:
-                mov     r15, 0                  ; r15 = 0 (iterator)
+        mov     r15, 0                          ; r15 = 0 (iterator)
                 
         nextInP:
                 cmp     r15, rcx                ; if r15 >= rcx
@@ -121,11 +117,11 @@ nextP:
                 call    output_tab
                 
                 mov     r13, r15
-                imul    r13, 8                  ; r13 = r15 * 8
+                shl     r13, 3                  ; r13 = r15 * 8
                 
                 mov     r14, rdx
                 imul    r14, rcx
-                imul    r14, 8                  ; r12 = rdx * rcx * 8
+                shl     r14, 3                  ; r12 = rdx * rcx * 8
                 
                 add     r14, r13                ; r12 += r13
                     
@@ -179,43 +175,38 @@ matrix_mult:    ; void matix_mult (matrix A, matrix B)
         mov     rcx, [rbp + 16]                     ; rcx = this
         mov     r13, [rcx]                          ; r13 = this.ROWS
         mov     r12, [rcx + 8]                      ; r12 = this.COLS
-
-forM:
+        
         mov     rdx, 0                              ; rdx = 0 (iterator)
         
 nextM:   
         cmp     rdx, r13                            ; if rdx >= r13
         jge     endForM                             ; end outer for loop
-        
-        forMidM:
-                mov     r15, 0                      ; r15 = 0 (iterator)
+        mov     r15, 0                              ; r15 = 0 (iterator)
                 
         nextMidM:
                 cmp     r15, r12                    ; if r15 >= r12
                 jge     endMidM                     ; end middle for loop
                 mov     r10, 0                      ; sum = 0
-                
-                forInM:
-                        mov     r14, 0              ; r14 = 0 (iterator)
+                mov     r14, 0                      ; r14 = 0 (iterator)
                         
                 nextInM:
                         cmp     r14, [rax + 8]      ; if r14 >= A.COLS
                         jge     endInM              ; end inner for loop
                         
                         mov     r8, r14
-                        imul    r8, 8               ; r8 = 8 * k
+                        shl     r8, 3               ; r8 = 8 * k
                         mov     r9, rdx
                         imul    r9, [rax + 8]
-                        imul    r9, 8               ; r9 = row * A.COLS * 8
+                        shl     r9, 3               ; r9 = row * A.COLS * 8
                         add     r9, r8              ; r9 += 8 * k
                         
                         mov     r11, qword[rax + 16 + r9] ; r11 = A.elem[row,k]
                         
                         mov     r8, r15
-                        imul    r8, 8               ; r8 = 8 * col
+                        shl     r8, 3               ; r8 = 8 * col
                         mov     r9, r14
                         imul    r9, [rbx + 8]
-                        imul    r9, 8               ; r9 = k * B.COLS * 8
+                        shl     r9, 3               ; r9 = k * B.COLS * 8
                         add     r9, r8
                         
                         imul    r11, qword[rbx + 16 + r9] ; r11 *= B.elem[k,col]
@@ -228,9 +219,9 @@ nextM:
                 endInM:
                         mov     r8, rdx             
                         imul    r8, r12   
-                        imul    r8, 8               ; r8 = row * this.COLS * 8
+                        shl     r8, 3               ; r8 = row * this.COLS * 8
                         mov     r9, r15
-                        imul    r9, 8               ; r9 = col * 8
+                        shl     r9, 3               ; r9 = col * 8
                         add     r9, r8              ; r9 += r8
                         
                         mov     [rcx + 16 + r9], r10; this[row, col] = sum
